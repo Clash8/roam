@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS public.venues (
     name TEXT NOT NULL,
     address TEXT,
     website_url TEXT,
-    instagram_url TEXT,
+    instagram_username TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.organizers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     website_url TEXT,
-    instagram_url TEXT,
+    instagram_username TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 

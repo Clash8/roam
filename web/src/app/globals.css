@@ -5,16 +5,245 @@
   --color-foreground: var(--foreground);
 }
 
-@layer utilities {
-  .glass {
-    @apply bg-white/5 backdrop-blur-xl border border-white/10 shadow-2xl;
+/* ─── Surface utilities ─────────────────────────────────────── */
+/* NOTE: kept outside @layer so Lightning CSS does not strip backdrop-filter */
+.glass {
+  background-color: rgb(255 255 255 / 0.05);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgb(255 255 255 / 0.10);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+}
+.glass-strong {
+  background-color: rgb(255 255 255 / 0.07);
+  -webkit-backdrop-filter: blur(32px);
+  backdrop-filter: blur(32px);
+  border: 1px solid rgb(255 255 255 / 0.13);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.5);
+}
+.glass-card {
+  background-color: rgb(255 255 255 / 0.04);
+  -webkit-backdrop-filter: blur(24px);
+  backdrop-filter: blur(24px);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.4);
+}
+
+@layer components {
+
+  /* ─── Input ─────────────────────────────────────────────── */
+  .input-glass {
+    background-color: rgb(255 255 255 / 0.05);
+    border: 1px solid rgb(255 255 255 / 0.15);
+    border-radius: 0.75rem;
+    padding-top: 0.75rem;
+    padding-right: 1rem;
+    padding-bottom: 0.75rem;
+    padding-left: 1rem;
+    color: #fff;
+    transition: all 0.2s;
+    outline: none;
+    width: 100%;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .input-glass::placeholder {
+    color: rgb(107 114 128);
+  }
+  .input-glass-icon {
+    padding-left: 2.5rem;
+  }
+  .input-glass:focus {
+    border-color: rgb(217 70 239 / 0.6);
+    background-color: rgb(255 255 255 / 0.08);
+    box-shadow: 0 0 0 3px rgb(217 70 239 / 0.12);
+  }
+
+  /* ─── Buttons ────────────────────────────────────────────── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    color: #fff;
+    background-image: linear-gradient(to right, #c026d3, #4338ca);
+    box-shadow: 0 4px 14px rgb(217 70 239 / 0.25);
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-primary:hover {
+    background-image: linear-gradient(to right, #d946ef, #6366f1);
+    box-shadow: 0 6px 20px rgb(217 70 239 / 0.35);
+  }
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+  .btn-primary:disabled,
+  .btn-primary[disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    color: #fff;
+    background-color: rgb(255 255 255 / 0.05);
+    border: 1px solid rgb(255 255 255 / 0.10);
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .btn-secondary:hover {
+    background-color: rgb(255 255 255 / 0.10);
+    border-color: rgb(255 255 255 / 0.20);
+  }
+  .btn-secondary:active {
+    transform: scale(0.95);
+  }
+
+  .btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #fff;
+    background-color: rgb(239 68 68 / 0.10);
+    border: 1px solid rgb(239 68 68 / 0.30);
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-danger:hover {
+    background-color: rgb(239 68 68 / 0.20);
+    border-color: rgb(239 68 68 / 0.50);
+  }
+  .btn-danger:active {
+    transform: scale(0.95);
+  }
+
+  .btn-success {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #fff;
+    background-color: rgb(16 185 129 / 0.10);
+    border: 1px solid rgb(16 185 129 / 0.30);
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+  .btn-success:hover {
+    background-color: rgb(16 185 129 / 0.20);
+    border-color: rgb(16 185 129 / 0.50);
+  }
+  .btn-success:active {
+    transform: scale(0.95);
+  }
+
+  /* ─── Badges ─────────────────────────────────────────────── */
+  .badge-pending {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    background-color: rgb(245 158 11 / 0.15);
+    border: 1px solid rgb(245 158 11 / 0.30);
+    color: rgb(252 211 77);
+  }
+  .badge-approved {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    background-color: rgb(16 185 129 / 0.15);
+    border: 1px solid rgb(16 185 129 / 0.30);
+    color: rgb(110 231 183);
+  }
+  .badge-rejected {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-radius: 9999px;
+    background-color: rgb(239 68 68 / 0.15);
+    border: 1px solid rgb(239 68 68 / 0.30);
+    color: rgb(252 165 165);
+  }
+
+  /* ─── Typography helpers ─────────────────────────────────── */
+  .page-title {
+    font-size: 1.875rem;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: #fff;
+    line-height: 1.2;
+  }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: rgb(232 121 249);
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
   }
 }
 
+/* ─── Global base ────────────────────────────────────────────── */
 body {
   background-color: #000;
   color: #fff;
-  background-image: radial-gradient(circle at top, rgba(30,15,50,1) 0%, rgba(5,5,10,1) 100%);
+  background-image: radial-gradient(ellipse at top, rgba(30,10,60,1) 0%, rgba(5,5,10,1) 60%);
   background-attachment: fixed;
   min-height: 100vh;
+}
+
+::selection {
+  background-color: rgba(217, 70, 239, 0.3);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 70, 239, 0.3) transparent;
+}
+
+/* Ensure inputs don't get browser default white background */
+input, textarea, select {
+  background-color: transparent;
+  color-scheme: dark;
+}
+
+button {
+  cursor: pointer;
 }
