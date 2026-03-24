@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { OrganizerManager } from './OrganizerManager'
 
 export default async function AdminOrganizersPage() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { data: organizers } = await supabase
     .from('organizers')
     .select('id, name, website_url, instagram_username')

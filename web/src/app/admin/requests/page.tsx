@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { updateRequestStatusForm, updateEventRequestStatusForm } from '@/app/actions/auth'
 import { Building2, Users, CalendarDays, CheckCircle, Clock, Star } from 'lucide-react'
 import { InstagramIcon } from '@/components/InstagramIcon'
@@ -18,7 +18,7 @@ export default async function AdminRequestsPage({
   searchParams: Promise<{ status?: string; type?: string }>
 }) {
   const { status: filterStatus, type: filterType } = await searchParams
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   let venueOrgQuery = supabase.from('requests').select('*').order('created_at', { ascending: false })
   let eventQuery    = supabase.from('event_requests').select('*').order('created_at', { ascending: false })

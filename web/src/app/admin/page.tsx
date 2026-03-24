@@ -1,9 +1,9 @@
-import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import Link from 'next/link'
 import { Inbox, Building2, Users, CalendarDays, ArrowRight } from 'lucide-react'
 
 export default async function AdminOverviewPage() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const [
     { count: pendingVenueOrg },

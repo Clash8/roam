@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import { revalidatePath } from 'next/cache'
 
 export interface EventFormData {
@@ -46,7 +46,7 @@ function toRow(data: EventFormData) {
 }
 
 export async function createEvent(data: EventFormData): Promise<{ error?: string }> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('events').insert(toRow(data))
   if (error) return { error: error.message }
   revalidatePath('/admin/events')
@@ -54,7 +54,7 @@ export async function createEvent(data: EventFormData): Promise<{ error?: string
 }
 
 export async function updateEvent(id: string, data: EventFormData): Promise<{ error?: string }> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('events').update(toRow(data)).eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/events')
@@ -62,7 +62,7 @@ export async function updateEvent(id: string, data: EventFormData): Promise<{ er
 }
 
 export async function deleteEvent(id: string): Promise<{ error?: string }> {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const { error } = await supabase.from('events').delete().eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/admin/events')

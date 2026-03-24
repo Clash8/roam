@@ -1,8 +1,8 @@
-import { createClient } from '@/lib/supabase-server'
+import { createAdminClient } from '@/lib/supabase-admin'
 import EventsClient from './EventsClient'
 
 export default async function AdminEventsPage() {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
 
   const [{ data: events }, { data: venues }, { data: organizers }] = await Promise.all([
     supabase

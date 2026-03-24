@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, refresh } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { createAdminClient } from '@/lib/supabase-admin'
@@ -38,7 +38,6 @@ export async function signUp(prevState: { error: string; success?: boolean } | n
 export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()
-  revalidatePath('/', 'layout')
   redirect('/')
 }
 
@@ -120,6 +119,7 @@ export async function submitRequest(prevState: { error: string; success: boolean
   }
 
   revalidatePath('/dashboard')
+  revalidatePath('/admin')
   return { error: '', success: true }
 }
 
@@ -183,7 +183,9 @@ export async function updateRequestStatus(id: string, status: 'approved' | 'reje
     await awardPoints(req.user_id, 2)
   }
 
-  redirect('/admin/requests')
+  revalidatePath('/admin/requests')
+  revalidatePath('/admin')
+  refresh()
 }
 
 export async function updateEventRequestStatus(id: string, status: 'approved' | 'rejected', rejection_reason: string | null = null) {
@@ -205,7 +207,9 @@ export async function updateEventRequestStatus(id: string, status: 'approved' | 
     await awardPoints(req.user_id, 5)
   }
 
-  redirect('/admin/requests')
+  revalidatePath('/admin/requests')
+  revalidatePath('/admin')
+  refresh()
 }
 
 export async function deleteRequest(id: string) {
@@ -223,13 +227,13 @@ export async function deleteEventRequest(id: string) {
 }
 
 export async function deleteVenue(id: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   await supabase.from('venues').delete().eq('id', id)
   revalidatePath('/admin/venues')
 }
 
 export async function insertVenue(_prev: null, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const igHandle = (formData.get('instagram_handle') as string | null)?.trim().replace(/^@/, '') || null
   const { error } = await supabase.from('venues').insert({
     name: formData.get('name') as string,
@@ -243,7 +247,7 @@ export async function insertVenue(_prev: null, formData: FormData) {
 }
 
 export async function updateVenue(_prev: null, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const id = formData.get('id') as string
   const igHandle = (formData.get('instagram_handle') as string | null)?.trim().replace(/^@/, '') || null
   const { error } = await supabase.from('venues').update({
@@ -258,13 +262,13 @@ export async function updateVenue(_prev: null, formData: FormData) {
 }
 
 export async function deleteOrganizer(id: string) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   await supabase.from('organizers').delete().eq('id', id)
   revalidatePath('/admin/organizers')
 }
 
 export async function insertOrganizer(_prev: null, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const igHandle = (formData.get('instagram_handle') as string | null)?.trim().replace(/^@/, '') || null
   const { error } = await supabase.from('organizers').insert({
     name: formData.get('name') as string,
@@ -277,7 +281,7 @@ export async function insertOrganizer(_prev: null, formData: FormData) {
 }
 
 export async function updateOrganizer(_prev: null, formData: FormData) {
-  const supabase = await createClient()
+  const supabase = createAdminClient()
   const id = formData.get('id') as string
   const igHandle = (formData.get('instagram_handle') as string | null)?.trim().replace(/^@/, '') || null
   const { error } = await supabase.from('organizers').update({
