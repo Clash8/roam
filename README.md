@@ -1,76 +1,128 @@
-# 🚀 Tracker MVP: Aggregatore Eventi Roma (Relazionale)
+# Roam — Event Discovery for Rome
 
-## Obiettivo
-Pipeline automatizzata: Scraping (Apify) -> Parsing (OpenAI) -> DB Relazionale (Supabase) -> UI (Vercel).
+**[roamfinder.it](https://roamfinder.it)** | [GitHub Repo](https://github.com/Clash8/roam)
 
----
+Roam automatically discovers events in Rome by scraping Instagram profiles of venues and organizers, parsing event details with AI, and displaying them on a modern web app.
 
-## FASE 1: Setup Account e Chiavi API
-- [ ] **Apify:** Crea account, vai su Settings -> Integrations -> Copia `API Token`.
-- [ ] **OpenAI:** Crea account, aggiungi credito (5$), genera `Secret Key`.
-- [ ] **Supabase:** Crea progetto. Copia `Connection String` (URI) dal DB e la `anon` public key dalle API.
+## How It Works
 
-## FASE 2: Il Database Relazionale (Supabase SQL)
-Creiamo 3 tabelle interconnesse. Esegui questi step nell'SQL Editor di Supabase.
+```
+Instagram profiles → Apify scraper → OpenAI GPT-4o-mini → Supabase DB → Next.js frontend
+```
 
-- [ ] **1. Crea la tabella `venues` (Locali - es. The Sanctuary)**
-  - `id` (UUID, Primary Key)
-  - `name` (Text)
-  - `address` (Text)
-  - `website_url` (Text, nullable)
-  - `instagram_url` (Text, nullable)
-  - `created_at` (Timestamp)
+1. **Scrape** — A daily GitHub Actions workflow runs `instagram_scraper.py`, which reads venue and organizer Instagram URLs from Supabase, fetches their recent posts via the Apify API, and sends captions + images to OpenAI's GPT-4o-mini to extract structured event data (date, time, location, categories, price, etc.).
+2. **Enrich** — `profile_enricher.py` pulls additional metadata from Instagram profiles (bios, profile pictures, follower counts) via Apify and standardizes it with OpenAI before updating venue/organizer records.
+3. **Display** — A Next.js web app queries Supabase and renders events with a glassmorphism UI. Users can register, submit new venue/organizer requests, and track them from a personal dashboard. Admins manage events, venues, organizers, and user requests from dedicated panels.
 
-- [ ] **2. Crea la tabella `organizers` (Organizzatori - es. Croccant3)**
-  - `id` (UUID, Primary Key)
-  - `name` (Text)
-  - `website_url` (Text, nullable)
-  - `instagram_url` (Text, nullable)
-  - `created_at` (Timestamp)
-  *(Nota: niente indirizzo qui, sono nomadi).*
+## Project Structure
 
-- [ ] **3. Crea la tabella `events` (Eventi) collegandola alle precedenti**
-  - `id` (UUID, Primary Key)
-  - `title` (Text)
-  - `date` (Date)
-  - `time` (Text)
-  - `end_time` (Text) *-- es. "til late"*
-  - `location_name` (Text) *-- Nome del posto come fallback*
-  - `venue_id` (UUID, Foreign Key -> venues.id, nullable)
-  - `organizer_id` (UUID, Foreign Key -> organizers.id, nullable)
-  - `image_url` (Text)
-  - `description` (Text)
-  - `category` (Text array) *-- es. ["Techno", "Aperitivo"]*
-  - `coordinates` (JSON) *-- es. {"lat": 41.9, "lng": 12.5}*
-  - `price` (Text)
-  - `ticket_link` (Text)
-  - `dresscode` (Text)
-  - `min_age` (Integer)
-  - `guestlist_only` (Boolean, default false)
-  - `is_sold_out` (Boolean, default false)
-  - `source_link` (Text)
-  - `raw_text` (Text) *-- Il testo originale di IG per debug*
-  - `ai_confidence_score` (Integer) *-- Da 1 a 100*
-  - `created_at` (Timestamp)
+```
+roam/
+├── python/                     # Data pipeline
+│   ├── instagram_scraper.py    # Daily scraper (Apify + OpenAI → Supabase)
+│   ├── profile_enricher.py     # Instagram profile metadata enricher
+│   └── requirements.txt
+├── web/                        # Next.js frontend
+│   └── src/
+│       └── app/
+│           ├── page.tsx        # Landing page — event discovery grid
+│           ├── login/          # Auth — login
+│           ├── register/       # Auth — registration
+│           ├── dashboard/      # User dashboard & request submission
+│           ├── profile/        # User profile
+│           └── admin/          # Admin panels (events, venues, organizers, requests)
+├── db/                         # SQL schema & migrations
+└── .github/workflows/          # GitHub Actions (daily scraper cron)
+```
 
-- [ ] **4. Permessi:** Crea una policy RLS (Row Level Security) per tutte e tre le tabelle per permettere la lettura pubblica (`SELECT`).
+## Tech Stack
 
-## FASE 3: Lo Script Python (Il "Cervello")
-- [ ] Crea file `scraper.py` e installa: `pip install apify-client openai supabase`.
-- [ ] **3.1 - Scraping:** Usa Apify per scaricare i post di un target (es. il profilo IG di *croccant3*).
-- [ ] **3.2 - Parsing (OpenAI):** Passa il testo a GPT-4o-mini chiedendo un JSON che combaci ESATTAMENTE con i campi della tabella `events`.
-- [ ] **3.3 - Gestione Relazioni (Logica del DB):**
-  - Prima di inserire l'evento, lo script controlla se il locale e l'organizzatore esistono già nelle rispettive tabelle usando l'URL di Instagram come riferimento.
-  - Se non esistono, lo script inserisce la nuova *venue* o *organizer* e ne recupera l'`id`.
-- [ ] **3.4 - Inserimento Evento:** Invia l'evento alla tabella `events` agganciando i relativi `venue_id` e `organizer_id`.
+| Layer | Technology |
+|---|---|
+| **Scraping** | [Apify](https://apify.com) (Instagram post & profile scrapers) — [Actor Runs](https://console.apify.com/actors/runs) |
+| **AI Parsing** | [OpenAI GPT-4o-mini](https://openai.com) (vision + text → structured JSON) — [Usage Dashboard](https://platform.openai.com/settings/organization/usage) |
+| **Database** | [Supabase](https://supabase.com) (PostgreSQL + Row Level Security + Auth) — [Project Dashboard](https://supabase.com/dashboard/project/hkbjhnjmwcrjuhtlfmcj) |
+| **Frontend** | [Next.js 16](https://nextjs.org) (App Router, React 19, Server Components) |
+| **Styling** | [Tailwind CSS v4](https://tailwindcss.com) + custom glassmorphism design system |
+| **Icons** | [Lucide React](https://lucide.dev) |
+| **Hosting** | [Vercel](https://vercel.com) — [Deployment & Stores](https://vercel.com/matteocastaldi02-2324s-projects/~/stores) |
+| **Automation** | [GitHub Actions](https://github.com/Clash8/roam/actions) (daily cron at 03:00 UTC) |
+| **Language** | TypeScript (web), Python (pipeline) |
 
-## FASE 4: Automazione (GitHub Actions)
-- [ ] Crea Repository pubblica.
-- [ ] Aggiungi in *Secrets*: `APIFY_TOKEN`, `OPENAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`.
-- [ ] Crea il file `.github/workflows/daily_scraper.yml`.
-- [ ] Imposta il Cron Job (`0 3 * * *` per le 3 di notte), setup Python, installazione requisiti e run di `scraper.py`.
+## Getting Started
 
-## FASE 5: Il Frontend (Vercel)
-- [ ] Crea progetto web (React/Next.js).
-- [ ] Collega il frontend a Supabase. Ora puoi fare *join* dei dati! Quando scarichi un evento, scarica automaticamente anche i dati del locale e dell'organizzatore associati.
-- [ ] Crea la UI e metti online su Vercel collegando la repo.
+### Prerequisites
+
+- Node.js 18+
+- Python 3.x
+- Accounts: Apify, OpenAI, Supabase
+
+### Setup
+
+```bash
+# Clone the repo
+git clone https://github.com/Clash8/roam.git
+cd roam
+
+# Web app
+cd web
+cp .env.example .env.local   # Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY
+npm install
+npm run dev                   # http://localhost:3000
+
+# Python pipeline
+cd ../python
+python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp ../.env.example ../.env    # Add APIFY_TOKEN, OPENAI_API_KEY, SUPABASE_URL, SUPABASE_KEY
+python instagram_scraper.py
+```
+
+### Vercel Environment Variables
+
+In your [Vercel project settings](https://vercel.com/matteocastaldi02-2324s-projects/~/stores), add these environment variables for **all environments** (Production, Preview, Development):
+
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase public anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | Supabase service role key (for admin operations) |
+
+### GitHub Actions Secrets
+
+In [repo settings → Secrets](https://github.com/Clash8/roam/settings/secrets/actions), add these secrets for the daily scraper workflow:
+
+| Secret | Description |
+|---|---|
+| `APIFY_TOKEN` | Apify API token |
+| `OPENAI_API_KEY` | OpenAI API key |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_KEY` | Supabase anon key |
+
+## Database Schema
+
+Three core tables in Supabase (PostgreSQL):
+
+- **`venues`** — Locations (name, address, coordinates, Instagram URL, metadata)
+- **`organizers`** — Event organizers (name, Instagram URL, metadata)
+- **`events`** — Events with foreign keys to venues and organizers, plus categories, price, confidence score, and raw source text
+
+RLS policies enable public read access. Auth-based policies protect writes.
+
+## Roadmap
+
+- [ ] **Map view** — Interactive map showing events pinned to their venue locations
+- [ ] **Event detail pages** — Dedicated page for each event with full info, images, and links
+- [ ] **Filtering & search** — Filter events by category, date range, neighborhood, and price
+- [ ] **Favorites & notifications** — Let users save events and get notified about updates
+- [ ] **Multi-city expansion** — Extend the pipeline to support cities beyond Rome
+- [ ] **Organizer/venue public profiles** — Public-facing pages for each venue and organizer with upcoming events
+- [ ] **Social sharing** — Share event cards to Instagram Stories, WhatsApp, etc.
+- [ ] **Recommendation engine** — Personalized event suggestions based on user preferences and history
+- [ ] **Native mobile app** — React Native or Flutter app for iOS and Android
+- [ ] **Community contributions** — Let users submit events manually with AI-assisted form filling
+- [ ] **Analytics dashboard** — Insights for venues/organizers on event reach and engagement
+
+## License
+
+Private — All rights reserved.
