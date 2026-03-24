@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState, useEffect, useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { submitRequest } from '@/app/actions/auth'
 import { ArrowLeft, Building2, Users, CalendarDays, Send, Star } from 'lucide-react'
@@ -13,16 +13,25 @@ const TYPES = [
 ]
 
 export default function RequestPage() {
-  const [state, action, pending] = useActionState(submitRequest, null)
   const [selectedType, setSelectedType] = useState('venue')
   const [formKey, setFormKey] = useState(0)
-  const [showSuccess, setShowSuccess] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
+  const [pending, startTransition] = useTransition()
 
-  useEffect(() => {
-    if (state?.success) setShowSuccess(true)
-  }, [state])
+  function handleSubmit(formData: FormData) {
+    setError('')
+    startTransition(async () => {
+      const result = await submitRequest(null, formData)
+      if (result?.success) {
+        setSuccess(true)
+      } else if (result?.error) {
+        setError(result.error)
+      }
+    })
+  }
 
-  if (state?.success && showSuccess) {
+  if (success) {
     return (
       <div className="max-w-lg mx-auto px-4 py-8">
         <div className="glass-strong rounded-3xl p-10 text-center space-y-4">
@@ -35,7 +44,7 @@ export default function RequestPage() {
           </p>
           <div className="flex gap-3 justify-center pt-2">
             <button
-              onClick={() => { setShowSuccess(false); setFormKey(k => k + 1) }}
+              onClick={() => { setSuccess(false); setError(''); setFormKey(k => k + 1) }}
               className="btn-secondary text-sm px-4 py-2"
             >
               Altra richiesta
@@ -70,17 +79,17 @@ export default function RequestPage() {
           </p>
         </div>
 
-        {state?.error && (
+        {error && (
           <div
             className="px-4 py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-sm"
             role="alert"
             aria-live="polite"
           >
-            {state.error}
+            {error}
           </div>
         )}
 
-        <form key={formKey} action={action} className="space-y-5">
+        <form key={formKey} action={handleSubmit} className="space-y-5">
           {/* Type selector */}
           <fieldset>
             <legend className="block text-sm font-medium text-gray-300 mb-2">

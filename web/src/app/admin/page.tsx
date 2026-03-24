@@ -94,7 +94,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {(pendingRequests ?? 0) > 0 && (
-        <div className="glass rounded-2xl p-5 border-amber-500/20 bg-amber-500/5">
+        <Link href="/admin/requests" className="block glass rounded-2xl p-5 border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40 transition-all duration-200 group">
           <div className="flex items-center justify-between">
             <div>
               <p className="font-semibold text-amber-200">
@@ -104,12 +104,12 @@ export default async function AdminOverviewPage() {
                 Revisiona e approva le segnalazioni degli utenti.
               </p>
             </div>
-            <Link href="/admin/requests" className="btn-primary text-sm px-4 py-2 flex-shrink-0">
+            <span className="btn-primary text-sm px-4 py-2 flex-shrink-0">
               Gestisci
               <ArrowRight className="w-4 h-4" />
-            </Link>
+            </span>
           </div>
-        </div>
+        </Link>
       )}
     </div>
   )

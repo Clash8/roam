@@ -1,8 +1,8 @@
 import { createAdminClient } from '@/lib/supabase-admin'
-import { updateRequestStatusForm, updateEventRequestStatusForm } from '@/app/actions/auth'
-import { Building2, Users, CalendarDays, CheckCircle, Clock, Star } from 'lucide-react'
+import { Building2, Users, CalendarDays, Clock, Star } from 'lucide-react'
 import { InstagramIcon } from '@/components/InstagramIcon'
 import RejectModal from '@/components/RejectModal'
+import ApproveModal from '@/components/ApproveModal'
 
 type Status = 'pending' | 'approved' | 'rejected'
 
@@ -28,7 +28,12 @@ export default async function AdminRequestsPage({
     eventQuery    = eventQuery.eq('status', filterStatus)
   }
 
-  const [{ data: requests }, { data: eventRequests }] = await Promise.all([venueOrgQuery, eventQuery])
+  const [{ data: requests }, { data: eventRequests }, { data: venuesList }, { data: organizersList }] = await Promise.all([
+    venueOrgQuery,
+    eventQuery,
+    supabase.from('venues').select('id, name').order('name'),
+    supabase.from('organizers').select('id, name').order('name'),
+  ])
 
   // Merge and sort
   type Row = {
@@ -194,14 +199,24 @@ export default async function AdminRequestsPage({
 
                     {isPending && (
                       <div className="flex gap-2 mt-4">
-                        <form action={isEvent ? updateEventRequestStatusForm : updateRequestStatusForm}>
-                          <input type="hidden" name="id" value={req.id} />
-                          <input type="hidden" name="status" value="approved" />
-                          <button type="submit" className="btn-success">
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            Approva (+{isEvent ? 5 : 2} pts)
-                          </button>
-                        </form>
+                        <ApproveModal
+                          request={{
+                            id: req.id,
+                            _table: req._table,
+                            item_type: req.item_type ?? undefined,
+                            name: req.name ?? undefined,
+                            title: req.title ?? undefined,
+                            date: req.date ?? undefined,
+                            venue_name: req.venue_name ?? undefined,
+                            organizer_name: req.organizer_name ?? undefined,
+                            description: req.description ?? undefined,
+                            instagram_username: req.instagram_username ?? undefined,
+                            ticket_link: req.ticket_link ?? undefined,
+                          }}
+                          pts={pts}
+                          venues={venuesList ?? []}
+                          organizers={organizersList ?? []}
+                        />
                         <RejectModal id={req.id} isEvent={isEvent} />
                       </div>
                     )}

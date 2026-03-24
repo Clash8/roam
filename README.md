@@ -109,6 +109,20 @@ Three core tables in Supabase (PostgreSQL):
 
 RLS policies enable public read access. Auth-based policies protect writes.
 
+## Costs Overview
+
+Running Roam is essentially free. Here's the breakdown for a typical daily run (~50 Instagram posts):
+
+| Service | Usage | Cost |
+|---|---|---|
+| **Apify** (Instagram scraper) | ~52 posts scraped | ~$0.14 / run |
+| **OpenAI GPT-4o-mini** (image → JSON) | ~300 image parses | ~$0.04 / run |
+| **Supabase** (database + auth) | Free tier | $0 |
+| **Vercel** (hosting) | Hobby plan | $0 |
+| **GitHub Actions** (CI/CD) | Unlimited minutes (open-source) | $0 |
+
+**Total: ~$0.18 / day** — under $6 / month for a fully automated event discovery pipeline.
+
 ## Roadmap
 
 - [ ] **Map view** — Interactive map showing events pinned to their venue locations

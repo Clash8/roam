@@ -74,53 +74,56 @@ export async function changePassword(
 }
 
 export async function submitRequest(prevState: { error: string; success: boolean } | null, formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non autenticato', success: false }
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Non autenticato', success: false }
 
-  const item_type = formData.get('item_type') as string
+    const item_type = formData.get('item_type') as string
 
-  const instagram_username = (formData.get('instagram_url') as string | null)?.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '') || null
+    const instagram_username = (formData.get('instagram_url') as string | null)?.trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?instagram\.com\//, '').replace(/\/$/, '') || null
 
-  // For venue/organizer requests: block if instagram_username already in venues or organizers
-  if (item_type !== 'event' && instagram_username) {
-    const admin = createAdminClient()
-    const [{ count: inVenues }, { count: inOrganizers }] = await Promise.all([
-      admin.from('venues').select('id', { count: 'exact', head: true }).eq('instagram_username', instagram_username),
-      admin.from('organizers').select('id', { count: 'exact', head: true }).eq('instagram_username', instagram_username),
-    ])
-    if ((inVenues ?? 0) > 0 || (inOrganizers ?? 0) > 0) {
-      return { error: 'Questo profilo Instagram è già presente nel database.', success: false }
+    // For venue/organizer requests: block if instagram_username already in venues or organizers
+    if (item_type !== 'event' && instagram_username) {
+      const admin = createAdminClient()
+      const [{ count: inVenues }, { count: inOrganizers }] = await Promise.all([
+        admin.from('venues').select('id', { count: 'exact', head: true }).eq('instagram_username', instagram_username),
+        admin.from('organizers').select('id', { count: 'exact', head: true }).eq('instagram_username', instagram_username),
+      ])
+      if ((inVenues ?? 0) > 0 || (inOrganizers ?? 0) > 0) {
+        return { error: 'Questo profilo Instagram è già presente nel database.', success: false }
+      }
     }
-  }
 
-  if (item_type === 'event') {
-    const { error } = await supabase.from('event_requests').insert({
-      user_id: user.id,
-      title: formData.get('name'),
-      date: formData.get('date') || null,
-      venue_name: formData.get('venue_name') || null,
-      organizer_name: formData.get('organizer_name') || null,
-      description: formData.get('description') || null,
-      instagram_username,
-      ticket_link: formData.get('ticket_link') || null,
-      notes: formData.get('notes') || null,
-    })
-    if (error) return { error: igError(error), success: false }
-  } else {
-    const { error } = await supabase.from('requests').insert({
-      user_id: user.id,
-      item_type,
-      name: formData.get('name'),
-      instagram_username,
-      notes: formData.get('notes') || null,
-    })
-    if (error) return { error: igError(error), success: false }
-  }
+    if (item_type === 'event') {
+      const { error } = await supabase.from('event_requests').insert({
+        user_id: user.id,
+        title: formData.get('name'),
+        date: formData.get('date') || null,
+        venue_name: formData.get('venue_name') || null,
+        organizer_name: formData.get('organizer_name') || null,
+        description: formData.get('description') || null,
+        instagram_username,
+        ticket_link: formData.get('ticket_link') || null,
+        notes: formData.get('notes') || null,
+      })
+      if (error) return { error: igError(error), success: false }
+    } else {
+      const { error } = await supabase.from('requests').insert({
+        user_id: user.id,
+        item_type,
+        name: formData.get('name'),
+        instagram_username,
+        notes: formData.get('notes') || null,
+      })
+      if (error) return { error: igError(error), success: false }
+    }
 
-  revalidatePath('/dashboard')
-  revalidatePath('/admin')
-  return { error: '', success: true }
+    return { error: '', success: true }
+  } catch (e) {
+    console.error('submitRequest error:', e)
+    return { error: e instanceof Error ? e.message : 'Errore imprevisto', success: false }
+  }
 }
 
 function igError(error: { code?: string; message: string }): string {
@@ -210,6 +213,97 @@ export async function updateEventRequestStatus(id: string, status: 'approved' | 
   revalidatePath('/admin/requests')
   revalidatePath('/admin')
   refresh()
+}
+
+export async function approveAndInsertVenueOrOrganizer(formData: FormData): Promise<{ error: string }> {
+  const supabase = createAdminClient()
+  const requestId = formData.get('request_id') as string
+
+  // Fetch the original request to get user_id
+  const { data: req } = await supabase
+    .from('requests')
+    .select('user_id')
+    .eq('id', requestId)
+    .single()
+  if (!req) return { error: 'Richiesta non trovata' }
+
+  const itemType = formData.get('item_type') as string
+  const igHandle = (formData.get('instagram_username') as string | null)?.trim().replace(/^@/, '') || null
+  const name = formData.get('name') as string
+
+  if (itemType === 'venue') {
+    const { error } = await supabase.from('venues').insert({
+      name,
+      address: (formData.get('address') as string | null)?.trim() || null,
+      website_url: (formData.get('website_url') as string | null)?.trim() || null,
+      instagram_username: igHandle,
+    })
+    if (error) return { error: igError(error) }
+  } else {
+    const { error } = await supabase.from('organizers').insert({
+      name,
+      website_url: (formData.get('website_url') as string | null)?.trim() || null,
+      instagram_username: igHandle,
+    })
+    if (error) return { error: igError(error) }
+  }
+
+  // Mark request as approved + award points
+  await supabase.from('requests').update({ status: 'approved' }).eq('id', requestId)
+  if (req.user_id) await awardPoints(req.user_id, 2)
+
+  revalidatePath('/admin/requests')
+  revalidatePath('/admin/venues')
+  revalidatePath('/admin/organizers')
+  revalidatePath('/admin')
+  revalidatePath('/')
+  refresh()
+  return { error: '' }
+}
+
+export async function approveAndInsertEvent(formData: FormData): Promise<{ error: string }> {
+  const supabase = createAdminClient()
+  const requestId = formData.get('request_id') as string
+
+  const { data: req } = await supabase
+    .from('event_requests')
+    .select('user_id')
+    .eq('id', requestId)
+    .single()
+  if (!req) return { error: 'Richiesta non trovata' }
+
+  const igHandle = (formData.get('instagram_username') as string | null)?.trim().replace(/^@/, '') || null
+  const venueId = (formData.get('venue_id') as string | null)?.trim() || null
+  const organizerId = (formData.get('organizer_id') as string | null)?.trim() || null
+  const minAge = formData.get('min_age') as string | null
+
+  const { error } = await supabase.from('events').insert({
+    title: formData.get('title') as string,
+    date: (formData.get('date') as string | null)?.trim() || null,
+    time: (formData.get('time') as string | null)?.trim() || null,
+    end_time: (formData.get('end_time') as string | null)?.trim() || null,
+    location_name: (formData.get('location_name') as string | null)?.trim() || null,
+    venue_id: venueId || null,
+    organizer_id: organizerId || null,
+    description: (formData.get('description') as string | null)?.trim() || null,
+    price: (formData.get('price') as string | null)?.trim() || null,
+    ticket_link: (formData.get('ticket_link') as string | null)?.trim() || null,
+    dresscode: (formData.get('dresscode') as string | null)?.trim() || null,
+    min_age: minAge ? parseInt(minAge, 10) : null,
+    source_link: igHandle ? `https://instagram.com/${igHandle}` : null,
+  })
+  if (error) return { error: error.message }
+
+  // Mark request as approved + award points
+  await supabase.from('event_requests').update({ status: 'approved' }).eq('id', requestId)
+  if (req.user_id) await awardPoints(req.user_id, 5)
+
+  revalidatePath('/admin/requests')
+  revalidatePath('/admin/events')
+  revalidatePath('/admin')
+  revalidatePath('/')
+  refresh()
+  return { error: '' }
 }
 
 export async function deleteRequest(id: string) {
