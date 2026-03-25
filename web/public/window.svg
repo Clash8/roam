@@ -1,1 +1,19 @@
-<svg fill="none" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><path fill-rule="evenodd" clip-rule="evenodd" d="M1.5 2.5h13v10a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1zM0 1h16v11.5a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 0 12.5zm3.75 4.5a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5M7 4.75a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0m1.75.75a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5" fill="#666"/></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 160 160">
+  <defs>
+    <style>
+      .cls-1 {
+        fill: url(#linear-gradient);
+      }
+    </style>
+    <linearGradient id="linear-gradient" x1="34.41" y1="69.12" x2="125.59" y2="69.12" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4e36cb"/>
+      <stop offset=".15" stop-color="#5734cb"/>
+      <stop offset=".41" stop-color="#7031cd"/>
+      <stop offset=".74" stop-color="#992bd0"/>
+      <stop offset="1" stop-color="#c026d3"/>
+    </linearGradient>
+  </defs>
+  <circle cx="80" cy="80" r="76.72"/>
+  <path class="cls-1" d="M77.19,30.83l-42.35,73.35c-1.25,2.16.31,4.86,2.81,4.86h84.7c2.49,0,4.05-2.7,2.81-4.86L82.81,30.83c-1.25-2.16-4.37-2.16-5.61,0Z"/>
+</svg>
