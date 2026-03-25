@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { Mail, Shield, Calendar, User, Star, Zap } from 'lucide-react'
 import { signOut } from '@/app/actions/auth'
 import ChangePasswordForm from './ChangePasswordForm'
+import { ProfileLogoutButton } from '@/components/LogoutButton'
 
 const LEVELS = [
   { min: 0,   label: 'Esploratore',  color: 'text-gray-400',    border: 'border-gray-500/30',   bg: 'bg-gray-500/10' },
@@ -125,9 +126,7 @@ export default async function ProfilePage() {
       <ChangePasswordForm />
 
       <form action={signOut}>
-        <button type="submit" className="btn-danger w-full py-3 rounded-2xl text-base">
-          Disconnetti
-        </button>
+        <ProfileLogoutButton />
       </form>
     </div>
   )

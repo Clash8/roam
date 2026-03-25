@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase-server'
 import { signOut } from '@/app/actions/auth'
 import { LayoutDashboard, LogIn, UserPlus, User, Shield } from 'lucide-react'
+import { NavbarLogoutButton } from './LogoutButton'
 
 export default async function Navbar() {
   const supabase = await createClient()
@@ -53,12 +54,7 @@ export default async function Navbar() {
                   <span className="hidden sm:inline">Profilo</span>
                 </Link>
                 <form action={signOut}>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl text-sm font-medium text-gray-400 hover:bg-white/8 hover:text-white transition-all duration-200 cursor-pointer"
-                  >
-                    Esci
-                  </button>
+                  <NavbarLogoutButton />
                 </form>
               </>
             ) : (

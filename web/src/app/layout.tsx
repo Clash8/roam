@@ -14,8 +14,11 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'ROAM — Aggregatore Eventi Roma',
-  description: 'I migliori party e le serate underground a Roma. Costantemente aggiornato tramite AI.',
+  title: 'ROAM — Il meglio degli eventi a Roma',
+  description: 'Ogni giorno raccogliamo il meglio degli eventi così da non perderti niente.',
+  icons: {
+    icon: '/logo.svg',
+  },
 }
 
 export default function RootLayout({
