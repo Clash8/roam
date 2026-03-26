@@ -119,6 +119,8 @@ class Stats:
         self.events_skipped_duplicate = 0
         self.events_updated_duplicate = 0
         self.events_failed_insert = 0
+        self.events_skipped_incomplete = 0
+        self.events_skipped_wrong_city = 0
         self.organizers_created = 0
         self.venues_created = 0
         self.bio_links_resolved = 0
@@ -138,6 +140,8 @@ class Stats:
             f"  Events skipped (dupe)    {self.events_skipped_duplicate}\n"
             f"  Events updated (dupe)    {self.events_updated_duplicate}\n"
             f"  Events failed insert     {self.events_failed_insert}\n"
+            f"  Events skipped (incomplete) {self.events_skipped_incomplete}\n"
+            f"  Events skipped (wrong city) {self.events_skipped_wrong_city}\n"
             f"  Organizers created       {self.organizers_created}\n"
             f"  Venues created           {self.venues_created}\n"
             f"  Bio links resolved       {self.bio_links_resolved}\n"
@@ -268,6 +272,32 @@ def resolve_ticket_link(ticket_link, post_owner_ig):
         return bio_url
     logger.info(f"  Could not resolve 'bio' ticket link — no website_url for @{post_owner_ig}")
     return None
+
+
+# Cities/areas that are explicitly out of scope — events located here are dropped.
+_OUT_OF_AREA_RE = re.compile(r'\b(milan[oi]?)\b', re.IGNORECASE)
+
+# Bounding boxes (lat_min, lat_max, lng_min, lng_max) for out-of-area cities.
+_OUT_OF_AREA_BOXES = [
+    (45.30, 45.60, 8.90, 9.50),   # Milan metro area
+]
+
+
+def _is_out_of_area(location_name, coordinates_json):
+    """Return True if the event is clearly outside the Lazio/Rome catchment area."""
+    if location_name and _OUT_OF_AREA_RE.search(location_name):
+        return True
+    if coordinates_json:
+        try:
+            coords = json.loads(coordinates_json) if isinstance(coordinates_json, str) else coordinates_json
+            lat = float(coords.get("lat", 0))
+            lng = float(coords.get("lng", 0))
+            for lat_min, lat_max, lng_min, lng_max in _OUT_OF_AREA_BOXES:
+                if lat_min <= lat <= lat_max and lng_min <= lng <= lng_max:
+                    return True
+        except (ValueError, TypeError, json.JSONDecodeError):
+            pass
+    return False
 
 
 def _event_completeness_score(record):
@@ -1072,6 +1102,18 @@ def main():
                     "raw_text": event_data.get("raw_text"),
                     "ai_confidence_score": event_data.get("ai_confidence_score"),
                 }
+
+                # -- Drop events with no date and no location --
+                if not event_record["date"] and not event_record["location_name"]:
+                    stats.events_skipped_incomplete += 1
+                    logger.info(f"  Skipping '{event_record['title']}': no date and no location.")
+                    continue
+
+                # -- Drop events outside the Lazio/Rome area --
+                if _is_out_of_area(event_record["location_name"], event_record["coordinates"]):
+                    stats.events_skipped_wrong_city += 1
+                    logger.info(f"  Skipping '{event_record['title']}': location '{event_record['location_name']}' is outside coverage area.")
+                    continue
 
                 # -- Dedup check: find existing, compare, update or insert --
                 existing = find_existing_event(
