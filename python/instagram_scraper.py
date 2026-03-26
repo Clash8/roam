@@ -21,8 +21,8 @@ from supabase import create_client, Client
 # CONFIGURATION
 # =============================================================================
 
-DAYS_AGO = 4                   # 0 = ignore date filter.  N = only posts from last N days.
-MAX_POSTS_PER_PROFILE = 3      # 0 = ignore limit.        N = max N posts per profile.
+DAYS_AGO = 5                   # 0 = ignore date filter.  N = only posts from last N days.
+MAX_POSTS_PER_PROFILE = 15      # 0 = ignore limit.        N = max N posts per profile.
 
 FETCH_VENUES = True
 FETCH_ORGANIZERS = True
