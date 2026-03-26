@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import Image from 'next/image'
 import { Calendar, MapPin, Users, ExternalLink, Ticket, Zap } from 'lucide-react'
 
 export const revalidate = 60
@@ -11,25 +12,37 @@ export default async function Home({
   searchParams: Promise<{ cat?: string }>
 }) {
   const { cat } = await searchParams
+  const todayStr = new Date().toISOString().slice(0, 10)
 
-  let query = supabase
+  // Fetch upcoming and recent past events in parallel with DB-level filtering
+  let upcomingQuery = supabase
     .from('events')
     .select(`*, venues ( name, address ), organizers ( name )`)
+    .or(`date.gte.${todayStr},date.is.null`)
     .order('date', { ascending: true })
+    .limit(50)
+
+  let pastQuery = supabase
+    .from('events')
+    .select(`*, venues ( name, address ), organizers ( name )`)
+    .lt('date', todayStr)
+    .order('date', { ascending: false })
+    .limit(20)
 
   if (cat && cat !== 'Tutti') {
-    query = query.contains('category', [cat])
+    upcomingQuery = upcomingQuery.contains('category', [cat])
+    pastQuery = pastQuery.contains('category', [cat])
   }
 
-  const { data: events, error } = await query
+  const [{ data: upcoming, error: e1 }, { data: past, error: e2 }] = await Promise.all([
+    upcomingQuery,
+    pastQuery,
+  ])
 
-  if (error) console.error('Error fetching events:', error)
+  if (e1) console.error('Error fetching upcoming events:', e1)
+  if (e2) console.error('Error fetching past events:', e2)
 
-  const todayStr = new Date().toISOString().slice(0, 10)
-  const allEvents = events ?? []
-  const upcoming = allEvents.filter(e => !e.date || e.date >= todayStr)
-  const past = allEvents.filter(e => !!e.date && e.date < todayStr).reverse()
-  const displayEvents = [...upcoming, ...past]
+  const displayEvents = [...(upcoming ?? []), ...(past ?? [])]
 
   return (
     <div className="max-w-6xl mx-auto px-4 pb-24">
@@ -84,14 +97,12 @@ export default async function Home({
                 {/* Image */}
                 <div className="relative h-52 w-full overflow-hidden bg-gray-950 flex-shrink-0">
                   {event.image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={event.image_url}
                       alt={event.title}
-                      loading="lazy"
-                      width={600}
-                      height={208}
-                      className="object-cover w-full h-full opacity-70 group-hover:scale-105 group-hover:opacity-90 transition-all duration-700"
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                      className="object-cover opacity-70 group-hover:scale-105 group-hover:opacity-90 transition-all duration-700"
                     />
                   ) : (
                     <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-950 to-indigo-950" />

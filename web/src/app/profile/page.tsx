@@ -25,22 +25,11 @@ export default async function ProfilePage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { count: totalRequests } = await supabase
-    .from('requests')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-
-  const { count: approvedRequests } = await supabase
-    .from('requests')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('status', 'approved')
-
-  const { data: pointsRow } = await supabase
-    .from('user_points')
-    .select('total_points')
-    .eq('user_id', user.id)
-    .maybeSingle()
+  const [{ count: totalRequests }, { count: approvedRequests }, { data: pointsRow }] = await Promise.all([
+    supabase.from('requests').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    supabase.from('requests').select('id', { count: 'exact', head: true }).eq('user_id', user.id).eq('status', 'approved'),
+    supabase.from('user_points').select('total_points').eq('user_id', user.id).maybeSingle(),
+  ])
 
   const totalPoints = pointsRow?.total_points ?? 0
   const level = getLevel(totalPoints)
